@@ -1,12 +1,21 @@
 import { mkdir, writeFile, copyFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
+const fallbackConfig = {
+  enableSupabase: true,
+  supabaseUrl: "https://mfskmcrfykobtdmfvbju.supabase.co",
+  supabaseAnonKey: "sb_publishable_7uriHFzUMIqbVMrmqTzemg_ywolFC7n",
+  recordsTable: "live_schedule_records",
+  teachersTable: "live_schedule_teachers",
+  autoMigrateLocalData: true
+};
+
 const config = {
-  enableSupabase: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
-  supabaseUrl: process.env.SUPABASE_URL || "",
-  supabaseAnonKey: process.env.SUPABASE_ANON_KEY || "",
-  recordsTable: process.env.SUPABASE_RECORDS_TABLE || "live_schedule_records",
-  teachersTable: process.env.SUPABASE_TEACHERS_TABLE || "live_schedule_teachers",
+  enableSupabase: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) || fallbackConfig.enableSupabase,
+  supabaseUrl: process.env.SUPABASE_URL || fallbackConfig.supabaseUrl,
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY || fallbackConfig.supabaseAnonKey,
+  recordsTable: process.env.SUPABASE_RECORDS_TABLE || fallbackConfig.recordsTable,
+  teachersTable: process.env.SUPABASE_TEACHERS_TABLE || fallbackConfig.teachersTable,
   autoMigrateLocalData: true
 };
 
