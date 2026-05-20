@@ -23,12 +23,10 @@ const rootRuntimeConfig = resolve("runtime-config.js");
 const publicDir = resolve("public");
 const publicRuntimeConfig = resolve(publicDir, "runtime-config.js");
 const publicIndex = resolve(publicDir, "index.html");
-const publicApp = resolve(publicDir, "直播排期表.html");
-const publicRuntimeConfigExample = resolve(publicDir, "runtime-config.example.js");
+const publicApp = resolve(publicDir, "schedule.html");
 
 await mkdir(publicDir, { recursive: true });
 await writeFile(rootRuntimeConfig, "window.APP_CONFIG = " + JSON.stringify(config, null, 2) + ";\n", "utf8");
 await writeFile(publicRuntimeConfig, "window.APP_CONFIG = " + JSON.stringify(config, null, 2) + ";\n", "utf8");
 await copyFile(resolve("index.html"), publicIndex);
 await copyFile(resolve("直播排期表.html"), publicApp);
-await copyFile(resolve("runtime-config.example.js"), publicRuntimeConfigExample);

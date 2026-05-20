@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "node scripts/build-runtime-config.mjs"
+    "build": "node scripts/build-runtime-config.mjs",
+    "deploy": "npm run build && cd public && netlify deploy --prod --dir=."
   }
 }
