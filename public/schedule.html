@@ -190,6 +190,60 @@
     text-align: center;
   }
 
+  .sidebar-section {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .sidebar-list {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: calc(100vh - 430px);
+    overflow: auto;
+    padding-right: 4px;
+  }
+
+  .sidebar-mini-card {
+    width: 100%;
+    text-align: left;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.88);
+    border-radius: 14px;
+    padding: 10px 12px;
+    transition: 0.18s ease;
+  }
+
+  .sidebar-mini-card:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+
+  .sidebar-mini-card-title {
+    font-size: 12px;
+    line-height: 1.45;
+    font-weight: 600;
+  }
+
+  .sidebar-mini-card-meta {
+    margin-top: 6px;
+    font-size: 11px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.62);
+  }
+
+  .sidebar-empty {
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.46);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
   .sidebar-foot {
     position: absolute;
     bottom: 22px;
@@ -1458,6 +1512,11 @@
       </button>
     </nav>
 
+    <div class="sidebar-section" id="reservation-sidebar-section">
+      <div class="nav-label">未创建预约</div>
+      <div class="sidebar-list" id="reservation-sidebar-list"></div>
+    </div>
+
     <div class="sidebar-foot">
       数据默认保存在当前浏览器。<br>
       Excel 导入支持 `.xlsx`、`.xls`、`.csv`。<br>
@@ -2686,10 +2745,49 @@
     const activeRecords = getActiveRecords();
     const selfCount = activeRecords.filter(function(record) { return record.type === "自播"; }).length;
     const collabCount = activeRecords.filter(function(record) { return record.type === "达播"; }).length;
+    const pendingReservationCount = activeRecords.filter(function(record) {
+      return record.reservationCreated === "no";
+    }).length;
     document.getElementById("nav-record-count").textContent = String(activeRecords.length);
     document.getElementById("hero-total").textContent = String(activeRecords.length);
     document.getElementById("hero-self").textContent = String(selfCount);
     document.getElementById("hero-collab").textContent = String(collabCount);
+    const sidebarLabel = document.querySelector("#reservation-sidebar-section .nav-label");
+    if (sidebarLabel) {
+      sidebarLabel.textContent = "未创建预约" + (isReservationRequired() ? " · " + pendingReservationCount : "");
+    }
+  }
+
+  function renderReservationSidebar() {
+    const section = document.getElementById("reservation-sidebar-section");
+    const list = document.getElementById("reservation-sidebar-list");
+    if (!section || !list) return;
+    if (!isReservationRequired()) {
+      section.style.display = "none";
+      list.innerHTML = "";
+      return;
+    }
+    section.style.display = "block";
+    const pendingRecords = sortRecords(getActiveRecords().filter(function(record) {
+      return record.reservationCreated === "no";
+    }));
+    if (!pendingRecords.length) {
+      list.innerHTML = '<div class="sidebar-empty">当前没有未创建预约的记录。</div>';
+      return;
+    }
+    list.innerHTML = pendingRecords.map(function(record) {
+      return [
+        '<button class="sidebar-mini-card" type="button" onclick="openPendingReservationRecord(\'' + record.id + '\')">',
+        '<div class="sidebar-mini-card-title">' + escapeHtml(record.topic || "未命名直播") + '</div>',
+        '<div class="sidebar-mini-card-meta">' + escapeHtml(record.date || "—") + ' · ' + escapeHtml(record.startTime || "—") + (record.endTime ? ' - ' + escapeHtml(record.endTime) : '') + '<br>' + escapeHtml(getTeacherDisplay(record) || "—") + '</div>',
+        '</button>'
+      ].join("");
+    }).join("");
+  }
+
+  function openPendingReservationRecord(id) {
+    switchView("records");
+    openRecordModal(id);
   }
 
   function renderRecordsView() {
@@ -3018,6 +3116,7 @@
     ensureCalendarRangeForActiveRecords();
     updateReservationUI();
     updateCounts();
+    renderReservationSidebar();
     renderRecordsView();
     renderScheduleView();
     renderFilterView();
@@ -3083,10 +3182,6 @@
     const reservationCreated = isReservationRequired()
       ? document.getElementById("form-reservation-created").value
       : "yes";
-    if (isReservationRequired() && reservationCreated === "no") {
-      alert("这场直播还没有创建预约，请先创建直播预约后再新增记录。");
-      return;
-    }
     if (!date || !startTime) {
       alert("请至少填写直播日期和上播时间。");
       return;
